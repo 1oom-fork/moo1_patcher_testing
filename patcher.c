@@ -80,6 +80,7 @@ int main(int argc, char **argv)
     FILE *f = fopen("STARMAP.EXE", "r+b");
     if (!f) {
         printf("STARMAP.EXE not found\n");
+        return -1;
     }
     if (fix_ship_scanners(f)) {
         printf("Fail\n");
