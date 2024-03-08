@@ -70,8 +70,8 @@ int fix_ship_scanners(FILE *f)
         return -1;
     }
     // Check https://github.com/1oom-fork/1oom
-    moobin_set_nop(f, 0x6d96e, len1);   // See 80eac9857a4d41492876120fdfe95e091f53d724
-    moobin_replace(f, 0x6d99b, replace2, len2); // See 671042a99fa00a701e23d310b8f7acbe3c8b5d63
+    moobin_set_nop(f, 0x6d96e, len1);   // See af4ba8540867d4afb63c5227c7b581e8260f845c
+    moobin_replace(f, 0x6d99b, replace2, len2); // See f494885b9a7b2f28546abc0ee2921e379bb342b9
     return 0;
 }
 
