@@ -11,7 +11,22 @@ int moobin_check(FILE *f, int offset, const uint8_t str[], int len)
         }
         uint8_t c = getc(f) & 0xff;
         if (c != str[i]) {
-            printf("Wrong file\n");
+            return -2;
+        }
+    }
+    return 0;
+}
+
+int moobin_check_nop(FILE *f, int offset, int len)
+{
+    fseek(f, offset, SEEK_SET);
+    for (int i = 0; i < len; ++i) {
+        if (feof(f) || ferror(f)) {
+            printf("feof/ferror\n");
+            return -1;
+        }
+        uint8_t c = getc(f) & 0xff;
+        if (c != 0x90) {
             return -2;
         }
     }
@@ -65,16 +80,28 @@ int fix_ship_scanners(FILE *f)
     };
     int len2 = 6;
     if (moobin_check(f, 0x6d8f5, match0, len0)) {
-        return -1;
+        if (moobin_check_nop(f, 0x6d8f5, len0)) {
+            printf("Wrong file\n");
+            return -1;
+        } else {
+            printf("Warning: Chunk 0 has already been applied\n");
+        }
     }
     if (moobin_check(f, 0x6d96e, match1, len1)) {
-        if (!moobin_check(f, 0x6d99b, replace2, len2)) {
-            printf("Already patched?\n");
+        if (moobin_check_nop(f, 0x6d96e, len1)) {
+            printf("Wrong file\n");
+            return -1;
+        } else {
+            printf("Warning: Chunk 1 has already been applied\n");
         }
-        return -1;
     }
     if (moobin_check(f, 0x6d99b, match2, len2)) {
-        return -1;
+        if (moobin_check(f, 0x6d99b, replace2, len2)) {
+            printf("Wrong file\n");
+            return -1;
+        } else {
+            printf("Warning: Chunk 2 has already been applied\n");
+        }
     }
     // Check https://github.com/1oom-fork/1oom
     moobin_set_nop(f, 0x6d8f5, len0);   // See 9eee0ac925e4c721f6ebc27d1dfa14307b16c098
