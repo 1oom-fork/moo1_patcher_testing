@@ -46,6 +46,10 @@ int moobin_replace(FILE *f, int offset, const uint8_t str[], int len)
 
 int fix_ship_scanners(FILE *f)
 {
+    const uint8_t match0[] = {
+        0x83, 0x7e, 0xe6, 0x00, 0x7f, 0x03, 0xe9, 0xd8, 0x00
+    };
+    int len0 = 9;
     const uint8_t match1[] = {
         0x8b, 0x46, 0xec, 0xbb, 0x0a, 0x00, 0x99, 0xf7, 0xfb, 0x0b,
         0xd2, 0x75, 0x0b, 0x8b, 0x46, 0xec, 0xbb, 0x0a, 0x00, 0x99,
@@ -60,6 +64,9 @@ int fix_ship_scanners(FILE *f)
         0x8b, 0x46, 0xec, 0x89, 0x46, 0xf2
     };
     int len2 = 6;
+    if (moobin_check(f, 0x6d8f5, match0, len0)) {
+        return -1;
+    }
     if (moobin_check(f, 0x6d96e, match1, len1)) {
         if (!moobin_check(f, 0x6d99b, replace2, len2)) {
             printf("Already patched?\n");
@@ -70,6 +77,7 @@ int fix_ship_scanners(FILE *f)
         return -1;
     }
     // Check https://github.com/1oom-fork/1oom
+    moobin_set_nop(f, 0x6d8f5, len0);   // See 9eee0ac925e4c721f6ebc27d1dfa14307b16c098
     moobin_set_nop(f, 0x6d96e, len1);   // See af4ba8540867d4afb63c5227c7b581e8260f845c
     moobin_replace(f, 0x6d99b, replace2, len2); // See f494885b9a7b2f28546abc0ee2921e379bb342b9
     return 0;
