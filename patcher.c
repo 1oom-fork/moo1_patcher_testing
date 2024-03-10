@@ -159,7 +159,7 @@ int disable_mouse_warping(FILE *f)
         {match0, NULL, off0, len0},
         {match1, NULL, off1[0], len1},
         {match1, NULL, off1[1], len1},
-        {match1, NULL, off1[2], len1},
+        //{match1, NULL, off1[2], len1},
         {match2, NULL, off2[0], len2},
         {match2, NULL, off2[1], len2},
         {match3, NULL, off3, len3},
