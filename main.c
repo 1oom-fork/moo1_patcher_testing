@@ -1,79 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int moobin_check(FILE *f, int offset, const uint8_t str[], int len)
-{
-    fseek(f, offset, SEEK_SET);
-    if (feof(f) || ferror(f)) {
-        printf("feof/ferror\n");
-        return -1;
-    }
-    for (int i = 0; i < len; ++i) {
-        uint8_t c = getc(f) & 0xff;
-        if (feof(f) || ferror(f)) {
-            printf("feof/ferror\n");
-            return -1;
-        }
-        if (c != str[i]) {
-            return -2;
-        }
-    }
-    return 0;
-}
-
-int moobin_check_nop(FILE *f, int offset, int len)
-{
-    fseek(f, offset, SEEK_SET);
-    if (feof(f) || ferror(f)) {
-        printf("feof/ferror\n");
-        return -1;
-    }
-    for (int i = 0; i < len; ++i) {
-        uint8_t c = getc(f) & 0xff;
-        if (feof(f) || ferror(f)) {
-            printf("feof/ferror\n");
-            return -1;
-        }
-        if (c != 0x90) {
-            return -2;
-        }
-    }
-    return 0;
-}
-
-int moobin_set_nop(FILE *f, int offset, int len)
-{
-    fseek(f, offset, SEEK_SET);
-    if (feof(f) || ferror(f)) {
-        printf("feof/ferror\n");
-        return -1;
-    }
-    for (int i = 0; i < len; ++i) {
-        putc(0x90, f);
-        if (feof(f) || ferror(f)) {
-            printf("feof/ferror\n");
-            return -1;
-        }
-    }
-    return 0;
-}
-
-int moobin_replace(FILE *f, int offset, const uint8_t str[], int len)
-{
-    fseek(f, offset, SEEK_SET);
-    if (feof(f) || ferror(f)) {
-        printf("feof/ferror\n");
-        return -1;
-    }
-    for (int i = 0; i < len; ++i) {
-        putc(str[i], f);
-        if (feof(f) || ferror(f)) {
-            printf("feof/ferror\n");
-            return -1;
-        }
-    }
-    return 0;
-}
+#include "bin.h"
 
 typedef struct {
     const uint8_t *match;
@@ -84,24 +12,24 @@ typedef struct {
 
 int moobin_check_chunk(FILE *f, const moobin_chunk_t *chunk)
 {
-    return moobin_check(f, chunk->offset, chunk->match, chunk->len);
+    return bin_check(f, chunk->offset, chunk->match, chunk->len);
 }
 
 int moobin_check_chunk_patched(FILE *f, const moobin_chunk_t *chunk)
 {
     if (chunk->replace) {
-        return moobin_check(f, chunk->offset, chunk->replace, chunk->len);
+        return bin_check(f, chunk->offset, chunk->replace, chunk->len);
     } else {
-        return moobin_check_nop(f, chunk->offset, chunk->len);
+        return bin_check_nop(f, chunk->offset, chunk->len);
     }
 }
 
 void moobin_apply_chunk(FILE *f, const moobin_chunk_t *chunk)
 {
     if (chunk->replace) {
-        moobin_replace(f, chunk->offset, chunk->replace, chunk->len);
+        bin_replace(f, chunk->offset, chunk->replace, chunk->len);
     } else {
-        moobin_set_nop(f, chunk->offset, chunk->len);
+        bin_set_nop(f, chunk->offset, chunk->len);
     }
 }
 
@@ -190,24 +118,24 @@ int fix_ship_scanners(FILE *f)
         0x8b, 0x46, 0xec, 0x89, 0x46, 0xf2
     };
     int len2 = 6;
-    if (moobin_check(f, 0x6d8f5, match0, len0)) {
-        if (moobin_check_nop(f, 0x6d8f5, len0)) {
+    if (bin_check(f, 0x6d8f5, match0, len0)) {
+        if (bin_check_nop(f, 0x6d8f5, len0)) {
             printf("Wrong file\n");
             return -1;
         } else {
             printf("Warning: Chunk 0 has already been applied\n");
         }
     }
-    if (moobin_check(f, 0x6d96e, match1, len1)) {
-        if (moobin_check_nop(f, 0x6d96e, len1)) {
+    if (bin_check(f, 0x6d96e, match1, len1)) {
+        if (bin_check_nop(f, 0x6d96e, len1)) {
             printf("Wrong file\n");
             return -1;
         } else {
             printf("Warning: Chunk 1 has already been applied\n");
         }
     }
-    if (moobin_check(f, 0x6d99b, match2, len2)) {
-        if (moobin_check(f, 0x6d99b, replace2, len2)) {
+    if (bin_check(f, 0x6d99b, match2, len2)) {
+        if (bin_check(f, 0x6d99b, replace2, len2)) {
             printf("Wrong file\n");
             return -1;
         } else {
@@ -215,9 +143,9 @@ int fix_ship_scanners(FILE *f)
         }
     }
     // Check https://github.com/1oom-fork/1oom
-    moobin_set_nop(f, 0x6d8f5, len0);   // See 9eee0ac925e4c721f6ebc27d1dfa14307b16c098
-    moobin_set_nop(f, 0x6d96e, len1);   // See af4ba8540867d4afb63c5227c7b581e8260f845c
-    moobin_replace(f, 0x6d99b, replace2, len2); // See f494885b9a7b2f28546abc0ee2921e379bb342b9
+    bin_set_nop(f, 0x6d8f5, len0);   // See 9eee0ac925e4c721f6ebc27d1dfa14307b16c098
+    bin_set_nop(f, 0x6d96e, len1);   // See af4ba8540867d4afb63c5227c7b581e8260f845c
+    bin_replace(f, 0x6d99b, replace2, len2); // See f494885b9a7b2f28546abc0ee2921e379bb342b9
     return 0;
 }
 
