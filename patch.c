@@ -26,3 +26,8 @@ void apply_patch(FILE *f, const patch_t *patch)
         bin_set_nop(f, patch->offset, patch->len);
     }
 }
+
+void remove_patch(FILE *f, const patch_t *patch)
+{
+    bin_replace(f, patch->offset, patch->match, patch->len);
+}

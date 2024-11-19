@@ -20,5 +20,6 @@ typedef enum {
 
 extern patch_status_t get_patch_status(FILE *f, const patch_t *patch);
 extern void apply_patch(FILE *f, const patch_t *patch);
+extern void remove_patch(FILE *f, const patch_t *patch);
 
 #endif
