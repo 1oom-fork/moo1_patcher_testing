@@ -1,23 +1,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "patch.h"
+#include "patcher.h"
 
-int moobin_apply_chunk_list(FILE *f, const patch_t chunk_list[])
-{
-    const patch_status_t status = get_patch_set_status(f, chunk_list);
-    if (status == PATCH_STATUS_INVALID) {
-        printf("Wrong file\n");
-        return -1;
-    } else if (status == PATCH_STATUS_PATCHED) {
-        printf("Warning: Patch has already been applied\n");
-        return 0;
-    }
-    apply_patch_set(f, chunk_list);
-    return 0;
-}
-
-int disable_mouse_warping(FILE *f)
+int disable_mouse_warping(void)
 {
     const uint8_t match0[] = {
         0x8B, 0xC6, 0xBA, 0x26, 0x00, 0xF7, 0xEA, 0xC4, 0x1E, 0x6E,
@@ -60,10 +46,10 @@ int disable_mouse_warping(FILE *f)
     };
     // Check https://github.com/1oom-fork/1oom
     // See 26a29666fd87a59f1a8765ca34ef0a4c712004e8 and 28def32346d5b3704a510567f7809f7cfc48b442
-    return moobin_apply_chunk_list(f, chunk_list);
+    return execute_patcher("STARMAP.EXE", chunk_list);
 }
 
-int fix_ship_scanners(FILE *f)
+int fix_ship_scanners(void)
 {
     const uint8_t match0[] = {
         0x83, 0x7e, 0xe6, 0x00, 0x7f, 0x03, 0xe9, 0xd8, 0x00
@@ -92,21 +78,14 @@ int fix_ship_scanners(FILE *f)
         {match2, replace2, off2, len2},     // See f494885b9a7b2f28546abc0ee2921e379bb342b9
         {NULL, NULL, 0, 0},
     };
-    return moobin_apply_chunk_list(f, chunk_list);
+    return execute_patcher("STARMAP.EXE", chunk_list);
 }
 
 int main(int argc, char **argv)
 {
-    FILE *f = fopen("STARMAP.EXE", "r+b");
-    if (!f) {
-        printf("STARMAP.EXE not found\n");
-        return -1;
-    }
-    if (fix_ship_scanners(f) || disable_mouse_warping(f)) {
+    if (fix_ship_scanners() == PATCH_STATUS_INVALID || disable_mouse_warping() == PATCH_STATUS_INVALID) {
         printf("Fail\n");
     }
-    if (f) {
-        fclose(f);
-    }
+    getchar();
     return 0;
 }
