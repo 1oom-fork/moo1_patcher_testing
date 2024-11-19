@@ -1,53 +1,22 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "bin.h"
+#include "patch.h"
 
-typedef struct {
-    const uint8_t *match;
-    const uint8_t *replace;
-    int offset;
-    int len;
-} moobin_chunk_t;
-
-int moobin_check_chunk(FILE *f, const moobin_chunk_t *chunk)
-{
-    return bin_check(f, chunk->offset, chunk->match, chunk->len);
-}
-
-int moobin_check_chunk_patched(FILE *f, const moobin_chunk_t *chunk)
-{
-    if (chunk->replace) {
-        return bin_check(f, chunk->offset, chunk->replace, chunk->len);
-    } else {
-        return bin_check_nop(f, chunk->offset, chunk->len);
-    }
-}
-
-void moobin_apply_chunk(FILE *f, const moobin_chunk_t *chunk)
-{
-    if (chunk->replace) {
-        bin_replace(f, chunk->offset, chunk->replace, chunk->len);
-    } else {
-        bin_set_nop(f, chunk->offset, chunk->len);
-    }
-}
-
-int moobin_apply_chunk_list(FILE *f, const moobin_chunk_t chunk_list[])
+int moobin_apply_chunk_list(FILE *f, const patch_t chunk_list[])
 {
     for (int ci = 0; chunk_list[ci].match != NULL; ++ci) {
-        const moobin_chunk_t *ch = &chunk_list[ci];
-        if (moobin_check_chunk(f, ch)) {
-            if (moobin_check_chunk_patched(f, ch)) {
-                printf("Wrong file\n");
-                return -1;
-            } else {
-                printf("Warning: Chunk %d has already been applied\n", ci);
-            }
+        const patch_t *ch = &chunk_list[ci];
+        const patch_status_t status = get_patch_status(f, ch);
+        if (status == PATCH_STATUS_INVALID) {
+            printf("Wrong file\n");
+            return -1;
+        } else if (status == PATCH_STATUS_PATCHED) {
+            printf("Warning: Chunk %d has already been applied\n", ci);
         }
     }
     for (int ci = 0; chunk_list[ci].match != NULL; ++ci) {
-        moobin_apply_chunk(f, &chunk_list[ci]);
+        apply_patch(f, &chunk_list[ci]);
     }
     return 0;
 }
@@ -83,7 +52,7 @@ int disable_mouse_warping(FILE *f)
     };
     int len3 = 9;
     int off3 = 0x15ea5;
-    const moobin_chunk_t chunk_list[] = {
+    const patch_t chunk_list[] = {
         {match0, NULL, off0, len0},
         {match1, NULL, off1[0], len1},
         {match1, NULL, off1[1], len1},
@@ -121,7 +90,7 @@ int fix_ship_scanners(FILE *f)
     };
     int len2 = 6;
     int off2 = 0x6d99b;
-    const moobin_chunk_t chunk_list[] = {   // Check https://github.com/1oom-fork/1oom
+    const patch_t chunk_list[] = {          // Check https://github.com/1oom-fork/1oom
         {match0, NULL, off0, len0},         // See 9eee0ac925e4c721f6ebc27d1dfa14307b16c098
         {match1, NULL, off1, len1},         // See af4ba8540867d4afb63c5227c7b581e8260f845c
         {match2, replace2, off2, len2},     // See f494885b9a7b2f28546abc0ee2921e379bb342b9
