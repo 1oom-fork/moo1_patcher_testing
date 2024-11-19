@@ -22,4 +22,8 @@ extern patch_status_t get_patch_status(FILE *f, const patch_t *patch);
 extern void apply_patch(FILE *f, const patch_t *patch);
 extern void remove_patch(FILE *f, const patch_t *patch);
 
+extern patch_status_t get_patch_set_status(FILE *f, const patch_t *patch_set);
+extern void apply_patch_set(FILE *f, const patch_t *patch_set);
+extern void remove_patch_set(FILE *f, const patch_t *patch_set);
+
 #endif

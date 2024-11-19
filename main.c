@@ -5,19 +5,15 @@
 
 int moobin_apply_chunk_list(FILE *f, const patch_t chunk_list[])
 {
-    for (int ci = 0; chunk_list[ci].match != NULL; ++ci) {
-        const patch_t *ch = &chunk_list[ci];
-        const patch_status_t status = get_patch_status(f, ch);
-        if (status == PATCH_STATUS_INVALID) {
-            printf("Wrong file\n");
-            return -1;
-        } else if (status == PATCH_STATUS_PATCHED) {
-            printf("Warning: Chunk %d has already been applied\n", ci);
-        }
+    const patch_status_t status = get_patch_set_status(f, chunk_list);
+    if (status == PATCH_STATUS_INVALID) {
+        printf("Wrong file\n");
+        return -1;
+    } else if (status == PATCH_STATUS_PATCHED) {
+        printf("Warning: Patch has already been applied\n");
+        return 0;
     }
-    for (int ci = 0; chunk_list[ci].match != NULL; ++ci) {
-        apply_patch(f, &chunk_list[ci]);
-    }
+    apply_patch_set(f, chunk_list);
     return 0;
 }
 
